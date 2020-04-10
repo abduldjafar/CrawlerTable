@@ -1,9 +1,8 @@
-package tradingview
+package flight24
 
 import (
 	"CrawlerTable/lembarsaham"
 	"encoding/csv"
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"os"
@@ -11,31 +10,39 @@ import (
 	"time"
 )
 
-//tradingvi
+func RemoveIndex(s []string, index int) []string {
+	return append(s[:index], s[index+1:]...)
+}
 
-func Crawl(filename string, delay time.Duration) {
+func Crawler(filename string, delay time.Duration) {
 	var row []string
-
 	var rows [][]string
-
-	doc := lembarsaham.GetBody("https://id.tradingview.com/markets/stocks-indonesia/sectorandindustry-sector/")
-	doc.Find("tbody a").Each(func(index int, item *goquery.Selection) {
-		link, _ := item.Attr("href")
-		tablebody := lembarsaham.GetBody("https://id.tradingview.com" + link)
-		time.Sleep(delay * time.Second)
-		fmt.Println("Delay " + delay.String() + " detik")
-		tablebody.Find("table").Each(func(index int, tablehtml *goquery.Selection) {
+	var headings []string
+	dataAirlineCodee := []string{"n773ck", "EW-511TQ", "N773CK", "TC-LJS", "A7-BFT", "D-AALN"}
+	for _, data := range dataAirlineCodee {
+		doc := lembarsaham.GetBody("https://www.flightradar24.com/data/aircraft/" + data)
+		doc.Find("table").Each(func(index int, tablehtml *goquery.Selection) {
 			tablehtml.Find("tr").Each(func(indextr int, rowhtml *goquery.Selection) {
+				rowhtml.Find("th").Each(func(indexth int, tableheading *goquery.Selection) {
+
+				})
 				rowhtml.Find("td").Each(func(indexth int, tablecell *goquery.Selection) {
 					space := regexp.MustCompile(`\s+`)
 					s := space.ReplaceAllString(tablecell.Text(), " ")
 					row = append(row, s)
 				})
-				rows = append(rows, row)
+				if len(row) > 3 {
+					row[0] = row[5]
+					RemoveIndex(row, 5)
+					RemoveIndex(row, 13)
+					RemoveIndex(row, 12)
+					RemoveIndex(row, 11)
+					rows = append(rows, row)
+				}
 				row = nil
 			})
 		})
-	})
+	}
 
 	file, err := os.Open(filename)
 	//file, err := os.OpenFile(filename,os.O_APPEND|os.O_RDWR,os.ModeAppend)
@@ -51,11 +58,10 @@ func Crawl(filename string, delay time.Duration) {
 		}
 	}
 	defer file.Close()
-
+	headings = []string{"NO PENERBANGAN", "", "TANGGAL PENERBANGAN", "DARI", "MENUJU", "", "STD", "ATD", "STA", "", "STATUS KEDATANGAN", "", "", ""}
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	headings := []string{"KODE NAMA PT", "Terakhir", "%Perubahan", "Perrubahan", "Penialain", "Volume", "Cap Pasar", "P/E", "EPS(TTM)", "Pegawai", "Jenis Industri"}
 	err = writer.Write(headings)
 	lembarsaham.CheckError("Cannot write to file", err)
 
@@ -65,5 +71,4 @@ func Crawl(filename string, delay time.Duration) {
 			lembarsaham.CheckError("Cannot write to file", err)
 		}
 	}
-
 }
