@@ -18,11 +18,13 @@ func main() {
 		"https://finance.yahoo.com/screener/predefined/ms_basic_materials?count=25&offset=125 (finyahoo)\n"+
 		"https://www.bareksa.com/id/saham/sector (bareksa)\n"+
 		"https://lembarsaham.com/daftar-emiten/9-sektor-bei (lembarsaham)\n"+
-		"https://id.tradingview.com/markets/stocks-indonesia/sectorandindustry-sector/ (tradingview)\n")
+		"https://id.tradingview.com/markets/stocks-indonesia/sectorandindustry-sector/ (tradingview)\n"+
+		"https://www.flightradar24.com/ (flight24) \n")
 	count := flag.Int("count", 100, "parameter tambahan ketika crawl=finyahoo.\nBerguna untuk jumlah baris yang akan ditampilkam")
 	fileName := flag.String("filename", "result.csv", "untuk menyimpan file hasil crawling")
 	offset := flag.Int("offset", 100, "parameter tambahan ketika crawl=finyahoo.\nBerguna untuk offset untum menampilkan data")
 	delay := flag.Int("delay", 2, "delay saat crawling perhalaman (lembarsaham,financeyahoo,tradingview)\n")
+	aircode := flag.String("aircodef", "/data/aircodef.txt", "setingan untuk list file code penerbangan")
 
 	flag.Parse()
 
@@ -40,6 +42,6 @@ func main() {
 	} else if *crawl == "tradingview" {
 		tradingview.Crawl(*fileName, time.Duration(*delay))
 	} else if *crawl == "flight24" {
-		flight24.Crawler(*fileName, time.Duration(*delay))
+		flight24.Crawler(*fileName, time.Duration(*delay), *aircode)
 	}
 }

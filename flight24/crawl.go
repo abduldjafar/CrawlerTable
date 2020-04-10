@@ -2,6 +2,7 @@ package flight24
 
 import (
 	"CrawlerTable/lembarsaham"
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -15,11 +16,31 @@ func RemoveIndex(s []string, index int) []string {
 	return append(s[:index], s[index+1:]...)
 }
 
-func Crawler(filename string, delay time.Duration) {
+// readLines reads a whole file into memory
+// and returns a slice of its lines.
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
+
+func Crawler(filename string, delay time.Duration, filecodereg string) {
 	var row, rowair []string
 	var rows [][]string
 	var headings []string
-	dataAirlineCodee := []string{"n773ck", "EW-511TQ", "N773CK", "TC-LJS", "A7-BFT", "D-AALN"}
+
+	dataAirlineCodee, _ := readLines(filecodereg)
+
 	for _, data := range dataAirlineCodee {
 		rowair = nil
 		doc := lembarsaham.GetBody("https://www.flightradar24.com/data/aircraft/" + data)
@@ -49,11 +70,14 @@ func Crawler(filename string, delay time.Duration) {
 					row = append(row, rowair[4])
 					row = append(row, rowair[5])
 					row = append(row, rowair[6])
+					row = append(row, rowair[7])
+					row = append(row, rowair[8])
 					rows = append(rows, row)
 				}
 				row = nil
 			})
 		})
+		time.Sleep(delay * time.Second)
 	}
 
 	file, err := os.Open(filename)
@@ -70,8 +94,8 @@ func Crawler(filename string, delay time.Duration) {
 		}
 	}
 	defer file.Close()
-	headings = []string{"NO PENERBANGAN", "", "TANGGAL PENERBANGAN", "DARI", "MENUJU", "", "STD", "ATD", "STA", "",
-		"STATUS KEDATANGAN", "AIRCRAFT", "AIRLINE", "OPERATOR", "TYPE CODE", "CODE1", "CODE2", "MODE S"}
+	headings = []string{"Flight#", "", "Flight Date", "From", "To", "", "STD", "ATD", "STA", "",
+		"Arrival Status", "Aircraft", "Airline", "Operator", "Type Code", "Code1", "Code2", "Mode S", "Serial Number(MSN)", "Age"}
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
