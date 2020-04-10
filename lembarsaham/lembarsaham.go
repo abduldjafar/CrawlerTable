@@ -24,8 +24,9 @@ func GetBody(url string) *goquery.Document {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	for res.StatusCode != 200 {
+		time.Sleep(20 * time.Second)
+		res, err = http.Get(url)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
