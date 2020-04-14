@@ -4,6 +4,7 @@ import (
 	"CrawlerTable/lembarsaham"
 	"bufio"
 	"encoding/csv"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"os"
@@ -35,12 +36,7 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func Crawler(filename string, delay time.Duration, filecodereg string) {
-	var row, rowair []string
-	var rowslog [][]string
-	var headings []string
-	var temp2 []string
-
+func getfile(filename string) (*os.File, error) {
 	file, err := os.Open(filename)
 	//file, err := os.OpenFile(filename,os.O_APPEND|os.O_RDWR,os.ModeAppend)
 	if err != nil {
@@ -54,13 +50,29 @@ func Crawler(filename string, delay time.Duration, filecodereg string) {
 			log.Fatal(err.Error())
 		}
 	}
-	defer file.Close()
+	return file, err
+}
+
+func Crawler(filename string, delay time.Duration, filecodereg string) {
+	var row, rowair []string
+	var rowslog [][]string
+	var headings []string
+	var temp2 []string
+
+	file, err := getfile(filename)
+	fileError, err2 := getfile("fligh24_zerotransaktion.csv")
+	lembarsaham.CheckError("Error Mesages", err2)
+
+	headingserror := []string{"Aircraft", "Airline", "Operator", "Type", "Code", "Code1", "Code2", "Mode S", "#Aircraft", "#CrawlerDate"}
 	headings = []string{"Flight#", "Flight Date", "From", "To", "", "STD", "ATD", "STA", "",
 		"Arrival Status", "Aircraft#", "Aircraft", "Airline", "Operator", "Type Code", "Code1", "Code2", "Mode S", "Serial Number(MSN)", "Age"}
 	writer := csv.NewWriter(file)
+	writererror := csv.NewWriter(fileError)
 	defer writer.Flush()
+	defer writererror.Flush()
 
 	err = writer.Write(headings)
+	err2 = writererror.Write(headingserror)
 	lembarsaham.CheckError("Cannot write to file", err)
 
 	dataAirlineCodee, _ := readLines(filecodereg)
@@ -113,9 +125,21 @@ func Crawler(filename string, delay time.Duration, filecodereg string) {
 			})
 			log.Println("Success Get " + strconv.Itoa(len(rowslog)) + " rows")
 			log.Println("=================================================================")
+			if len(rowslog) == 0 {
+				utc := time.Now().UTC()
+				local := utc
+				location, err := time.LoadLocation("Asia/Jakarta")
+				if err == nil {
+					local = local.In(location)
+				}
+				rowair[7] = data
+				rowair[8] = strconv.Itoa(local.Year()) + "-" + local.Month().String() + "-" + strconv.Itoa(local.Day())
+				err2 := writererror.Write(rowair)
+				fmt.Println(rowair)
+				lembarsaham.CheckError("Cannot write to file", err2)
+			}
 			rowslog = nil
 		})
-
 		time.Sleep(delay * time.Second)
 	}
 }
