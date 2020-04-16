@@ -14,6 +14,19 @@ import (
 	"time"
 )
 
+func jakartaTime() (string, string) {
+	utc := time.Now().UTC()
+	local := utc
+	location, err := time.LoadLocation("Asia/Jakarta")
+	if err == nil {
+		local = local.In(location)
+	}
+	forfilename := strconv.Itoa(local.Year()) + "-" + local.Month().String() + "-" + strconv.Itoa(local.Day()) + "_" +
+		"" + strconv.Itoa(local.Hour()) + "-" + strconv.Itoa(local.Minute()) + "-" + strconv.Itoa(local.Second())
+	fordata := strconv.Itoa(local.Year()) + "-" + local.Month().String() + "-" + strconv.Itoa(local.Day()) + " " +
+		"" + strconv.Itoa(local.Hour()) + ":" + strconv.Itoa(local.Minute()) + ":" + strconv.Itoa(local.Second())
+	return forfilename, fordata
+}
 func RemoveIndex(s []string, index int) []string {
 	return append(s[:index], s[index+1:]...)
 }
@@ -60,20 +73,30 @@ func Crawler(filename string, delay time.Duration, filecodereg string) {
 	var temp2 []string
 
 	file, err := getfile(filename)
-	fileError, err2 := getfile("fligh24_zerotransaktion.csv")
-	lembarsaham.CheckError("Error Mesages", err2)
+	forfilename, _ := jakartaTime()
+	fileError, err2 := getfile("fligh24_zero_transaction-" + forfilename + ".csv")
+	fileghost, err3 := getfile("ghost_file_" + forfilename + ".csv")
 
-	headingserror := []string{"Aircraft", "Airline", "Operator", "Type", "Code", "Code1", "Code2", "Mode S", "#Aircraft", "#CrawlerDate"}
+	lembarsaham.CheckError("Error Mesages", err2)
+	lembarsaham.CheckError("Error Mesages", err3)
+	lembarsaham.CheckError("Error Mesages", err)
+
+	headingserror := []string{"Aircraft", "Airline", "Operator", "Type", "Code", "Code1", "Code2", "#Aircraft", "#CrawlerDate"}
+	//headingsghost := []string{"#Aircraft","TimeCrawled","Url"}
+	_, err4 := fileghost.WriteString("#Aircraft,TimeCrawled,Url\n")
+	lembarsaham.CheckError("error ", err4)
+
 	headings = []string{"Flight#", "Flight Date", "From", "To", "", "STD", "ATD", "STA", "",
 		"Arrival Status", "Aircraft#", "Aircraft", "Airline", "Operator", "Type Code", "Code1", "Code2", "Mode S", "Serial Number(MSN)", "Age"}
+
 	writer := csv.NewWriter(file)
 	writererror := csv.NewWriter(fileError)
+
 	defer writer.Flush()
 	defer writererror.Flush()
 
 	err = writer.Write(headings)
 	err2 = writererror.Write(headingserror)
-	lembarsaham.CheckError("Cannot write to file", err)
 
 	dataAirlineCodee, _ := readLines(filecodereg)
 
@@ -125,15 +148,15 @@ func Crawler(filename string, delay time.Duration, filecodereg string) {
 			})
 			log.Println("Success Get " + strconv.Itoa(len(rowslog)) + " rows")
 			log.Println("=================================================================")
-			if len(rowslog) == 0 {
-				utc := time.Now().UTC()
-				local := utc
-				location, err := time.LoadLocation("Asia/Jakarta")
-				if err == nil {
-					local = local.In(location)
-				}
+			if len(rowair) < 1 {
+				_, fordata := jakartaTime()
+				//dataw := []string{data,fordata,"https://www.flightradar24.com/data/aircraft/" + data}
+				_, err := fileghost.WriteString(data + "," + fordata + "," + "https://www.flightradar24.com/data/aircraft/" + data + "\n")
+				lembarsaham.CheckError("error ", err)
+			}
+			if len(rowslog) == 0 && len(rowair) > 7 {
 				rowair[7] = data
-				rowair[8] = strconv.Itoa(local.Year()) + "-" + local.Month().String() + "-" + strconv.Itoa(local.Day())
+				rowair[8], _ = jakartaTime()
 				err2 := writererror.Write(rowair)
 				fmt.Println(rowair)
 				lembarsaham.CheckError("Cannot write to file", err2)
