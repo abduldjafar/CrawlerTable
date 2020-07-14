@@ -4,8 +4,12 @@ import (
 	"CrawlerTable/bareksa"
 	"CrawlerTable/financeyahoo"
 	"CrawlerTable/flight24"
+	"CrawlerTable/idxtrading"
 	"CrawlerTable/lembarsaham"
+	"CrawlerTable/opencage"
 	"CrawlerTable/tradingview"
+	"CrawlerTable/wikiperusahaan"
+	"CrawlerTable/wikistasiun"
 	"flag"
 	"fmt"
 	"strconv"
@@ -25,6 +29,8 @@ func main() {
 	offset := flag.Int("offset", 100, "parameter tambahan ketika crawl=finyahoo.\nBerguna untuk offset untum menampilkan data")
 	delay := flag.Int("delay", 2, "delay saat crawling perhalaman (lembarsaham,financeyahoo,tradingview)\n")
 	aircode := flag.String("aircodef", "/data/aircodef.txt", "setingan untuk list file code penerbangan")
+	key := flag.String("key", "", "key for opencage")
+	datast := flag.String("datast", "data", "list data stasiun")
 
 	flag.Parse()
 
@@ -43,5 +49,13 @@ func main() {
 		tradingview.Crawl(*fileName, time.Duration(*delay))
 	} else if *crawl == "flight24" {
 		flight24.Crawler(*fileName, time.Duration(*delay), *aircode)
+	} else if *crawl == "stasiun" {
+		wikistasiun.Crawl(*fileName)
+	} else if *crawl == "opencage" {
+		opencage.Crawl(*fileName, *datast, *key)
+	} else if *crawl == "wikiperusahaan" {
+		wikiperusahaan.Crawl(*fileName)
+	}else if *crawl == "idx" {
+		idxtrading.Crawl(*fileName)
 	}
 }
